@@ -3,6 +3,7 @@
  */
 public class SudokuPuzzle {
 
+	public static int count;
 	
 	private Cell[][] _puzzle;
 	
@@ -10,6 +11,7 @@ public class SudokuPuzzle {
 	 * Default constructor
 	 */
 	public SudokuPuzzle() {
+		count = 9 * 9;
 		_puzzle = new Cell[9][9];
 	}
 	
@@ -61,6 +63,21 @@ public class SudokuPuzzle {
 	public void solve() {
 		
 		// hint generation
+		boolean hintGen = true;
+		
+		while( hintGen && count != 0 ) {
+			hintGen = hintGenerator();
+		}
+		
+		if( count == 0 ) {
+			System.out.println( "Win!" );
+		}
+	}
+	
+	public boolean hintGenerator() {
+		
+		boolean changed = false;
+		
 		for( int i = 0; i < _puzzle.length; i++ ) {
 			for( int j = 0; j < _puzzle[ 0 ].length; j++ ) {
 				if( _puzzle[ i ][ j ].getValue() == 0 ) {
@@ -68,13 +85,23 @@ public class SudokuPuzzle {
 					Cell[] col = getCol( _puzzle[ i ][ j ].getY() );
 					Cell[] qad = getQuadrant( _puzzle[ i ][ j ].getPos() );
 					for( int k = 0; k < row.length; k++ ) {
-						_puzzle[ i ][ j ].removeHint( row[ k ].getValue() );
-						_puzzle[ i ][ j ].removeHint( col[ k ].getValue() );
-						_puzzle[ i ][ j ].removeHint( qad[ k ].getValue() );
+						if( row[ k ].getValue() != 0 ) {
+							_puzzle[ i ][ j ].removeHint( row[ k ].getValue() );
+							changed = true;
+						}
+						if( col[ k ].getValue() != 0 ) {
+							_puzzle[ i ][ j ].removeHint( col[ k ].getValue() );
+							changed = true;
+						}
+						if( qad[ k ].getValue() != 0 ) {
+							_puzzle[ i ][ j ].removeHint( qad[ k ].getValue() );
+							changed = true;
+						}
 					}
 				}
 			}
 		}
+		return changed;
 	}
 	
 	/**
