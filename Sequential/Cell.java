@@ -94,6 +94,9 @@ public class Cell {
 		return myPos;
 	}
 	
+	/**
+	 * @return String representation of the Cell
+	 */
 	public String toString(){
 		return "(" + this.x + ", " + this.y + ") = "+ this.value;
 	}
