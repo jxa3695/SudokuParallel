@@ -6,11 +6,11 @@ import java.util.ArrayList;
 
 public class Cell {
 	
-	/** The array of possible answers for this cell */
+	/** The array of possible values for this cell */
 	private ArrayList< Integer > hints = new ArrayList< Integer >();
 	
 	private int
-		answer, // the cell's  answer
+		value, // the cell's  value
 		x, y, // cell's global coordinate
 		myPos; // representation of which 3x3 matrix it is
 	
@@ -23,27 +23,28 @@ public class Cell {
 	}
 	
 	/**
-	 * Access the answer at this cell
+	 * Access the value at this cell
 	 * 
-	 * @return the cell answer
+	 * @return the cell value
 	 */
-	public int getAnswer() {
-		return answer;
+	public int getValue() {
+		return value;
 	}
 
 	/**
-	 * Modify this cell's answer
+	 * Modify this cell's value
 	 * 
-	 * @param answer the new answer to be used
+	 * @param value the new value to be used
 	 */
-	public void setAnswer( int answer ) {
-		this.answer = answer;
+	public void setValue( int value ) {
+		this.value = value;
+		this.hints.clear();
 	}
 
 	/**
 	 * Return current hints for this cell
 	 * 
-	 * @return list of possible answers for this cell
+	 * @return list of possible values for this cell
 	 */
 	public ArrayList<Integer> getHints() {
 		return hints;
@@ -57,7 +58,7 @@ public class Cell {
 	public void removeHint(int num){
 		hints.remove( hints.indexOf(num) );
 		if (hints.size() == 1)
-			setAnswer(hints.get(0));
+			setValue(hints.get(0));
 	}
 	
 	/**
@@ -91,6 +92,10 @@ public class Cell {
 	 */
 	public int getPos() {
 		return myPos;
+	}
+	
+	public String toString(){
+		return "(" + this.x + ", " + this.y + ") = "+ this.value;
 	}
 
 }
