@@ -3,6 +3,7 @@
  */
 public class SudokuPuzzle {
 
+	
 	private Cell[][] _puzzle;
 	
 	/**
@@ -13,14 +14,12 @@ public class SudokuPuzzle {
 	}
 	
 	/**
-	 * Get a specific cell
+	 * Constructor to initialize with values
 	 * 
-	 * @param x
-	 * @param y
-	 * @return
+	 * @param values
 	 */
-	public Cell getCell(int x, int y) {
-		return _puzzle[x][y];
+	public SudokuPuzzle(int[][] values) {
+		
 	}
 	
 	/**
@@ -40,8 +39,20 @@ public class SudokuPuzzle {
 	 * @return
 	 */
 	public Cell[] getCol(int col) {
-		//TODO: return the actual column
-		return _puzzle[col];
+		Cell[] column = new Cell[9];
+		for (int x=0; x < 9; x++) {
+			column[x] = _puzzle[x][col];
+		}
+		return column;
+	}
+
+	/**
+	 * 
+	 * @param quad
+	 * @return
+	 */
+	public Cell[] getQuadrant(int quad) {
+		return new Cell[9];
 	}
 	
 	/**
