@@ -1,71 +1,89 @@
-import java.util.ArrayList;
-
 /**
  * Object representation of a cell in the Sudoku puzzle
  */
 
+import java.util.ArrayList;
+
 public class Cell {
-
-	/** This cell's value */
-	private int value;
-
-	/** The array of possible values for this cell */
+	
+	/** The array of possible answers for this cell */
 	private ArrayList< Integer > hints = new ArrayList< Integer >();
 	
-	private int myX, myY, myPos;
-
+	private int
+		answer, // the cell's  answer
+		x, y, // cell's global coordinate
+		myPos; // representation of which 3x3 matrix it is
+	
+	
+	/** Constructor **/
+	public Cell(int x, int y){
+		this.x = x;
+		this.y = y;
+		this.myPos = ( ( x / 3 ) * 3 ) + ( y / 3 );
+	}
+	
 	/**
-	 * Access the value at this cell
+	 * Access the answer at this cell
 	 * 
-	 * @return the cell value
+	 * @return the cell answer
 	 */
-	public int getValue() {
-		return value;
+	public int getAnswer() {
+		return answer;
 	}
 
 	/**
-	 * Modify this cell's value
+	 * Modify this cell's answer
 	 * 
-	 * @param value the new value to be used
+	 * @param answer the new answer to be used
 	 */
-	public void setValue( int value ) {
-		this.value = value;
+	public void setAnswer( int answer ) {
+		this.answer = answer;
 	}
 
 	/**
-	 * Current hints for this cell
+	 * Return current hints for this cell
 	 * 
-	 * @return list of possible values for this cell
+	 * @return list of possible answers for this cell
 	 */
 	public ArrayList<Integer> getHints() {
 		return hints;
 	}
 	
 	/**
+	 * Remove a number from this cell's possible list of value
 	 * 
-	 * @TODO stuff
-	 * @param x
-	 * @param y
+	 * @param the number that is not possible for this cell to be
 	 */
-	public void setCoordinates( int x, int y ) {
-		this.myX = x;
-		this.myY = y;
-		
-		this.myPos = ( ( x / 3 ) * 3 ) + ( y / 3 );
+	public void removeHint(int num){
+		hints.remove( hints.indexOf(num) );
+		if (hints.size() == 1)
+			setAnswer(hints.get(0));
+	}
+	
+	/**
+	 * Remove some numbers from this cell's possible list of value
+	 * 
+	 * @param an array of numbers that is not possible for this cell to be
+	 */
+	public void removeHints(int[] nums){
+		int numCount = nums.length;
+		for(int i =0; i<numCount; i++)
+			removeHint(i);
 	}
 
+
 	/**
-	 * @return the myX
+	 * @return the x
 	 */
 	public int getX() {
-		return myX;
+		return x;
 	}
 
 	/**
-	 * @return the myY
+	 * @return the y
 	 */
 	public int getY() {
-		return myY;
+		return y;
 	}
 
 	/**
