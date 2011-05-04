@@ -1,6 +1,8 @@
 /**
  * Class to hold the puzzle data structure and methods to operate on it
  */
+import java.util.ArrayList;
+
 public class SudokuPuzzle {
 
 	public static int count;
@@ -122,14 +124,14 @@ public class SudokuPuzzle {
 		int [] hintCounter = new int[9]; // counter for hint
 		Cell [] owner = new Cell[9]; // first encountered ownere for hint
 
-		for (int cell=0; cell<9; cell++){ //iterate through the cells in col
-			if ( col[i].getValue()>0 ) next; // skip cells with answer set already
+		for (int i=0; i<9; i++){ //iterate through the cells in col
+			if ( col[i].getValue()>0 ) continue; // skip cells with answer set already
 
-			int [] hints = col[i].getHints(); // get the list of hints in 
+			ArrayList<Integer> hints = col[i].getHints(); // get the list of hints in 
 
-			for(int j =0; j<hints.length; j++){ 
-				hintVal = hints[j] - 1;
-				if( owner[hintVal] == 0 ) owner[hintVal] = cell ; // record a first seen hints owner
+			for(int j =0; j<hints.size(); j++){ 
+				int hintVal = hints.get(j) - 1;
+				if( owner[hintVal] == null ) owner[hintVal] = col[i] ; // record a first seen hints owner
 				hintCounter[ hintVal ]++ ;  // for every hint seen increment its counter
 
 			}
@@ -138,9 +140,9 @@ public class SudokuPuzzle {
 		// go through hintCounter for any singlely owned hint(s)
 		for (int i=0; i<9; i++){
 			if (hintCounter[i] == 1) {
-				cell[i].setvalue( i );
+				owner[i].setValue( i );
 				//debugger
-				System.out.println(cell[i].toString())
+				System.out.println(col[i].toString());
 			}
 		}
 	}
