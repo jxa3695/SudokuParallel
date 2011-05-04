@@ -63,14 +63,14 @@ public class SudokuPuzzle {
 		// hint generation
 		for( int i = 0; i < _puzzle.length; i++ ) {
 			for( int j = 0; j < _puzzle[ 0 ].length; j++ ) {
-				if( _puzzle[ i ][ j ].getAnswer() == 0 ) {
+				if( _puzzle[ i ][ j ].getValue() == 0 ) {
 					Cell[] row = getRow( _puzzle[ i ][ j ].getX() );
 					Cell[] col = getCol( _puzzle[ i ][ j ].getY() );
 					Cell[] qad = getQuadrant( _puzzle[ i ][ j ].getPos() );
 					for( int k = 0; k < row.length; k++ ) {
-						_puzzle[ i ][ j ].removeHint( row[ k ].getAnswer() );
-						_puzzle[ i ][ j ].removeHint( col[ k ].getAnswer() );
-						_puzzle[ i ][ j ].removeHint( qad[ k ].getAnswer() );
+						_puzzle[ i ][ j ].removeHint( row[ k ].getValue() );
+						_puzzle[ i ][ j ].removeHint( col[ k ].getValue() );
+						_puzzle[ i ][ j ].removeHint( qad[ k ].getValue() );
 					}
 				}
 			}
@@ -96,7 +96,7 @@ public class SudokuPuzzle {
 		Cell [] owner = new Cell[9]; // first encountered ownere for hint
 
 		for (int cell=0; cell<9; cell++){ //iterate through the cells in col
-			if ( col[i].getAnswer()>0 ) next; // skip cells with answer set already
+			if ( col[i].getValue()>0 ) next; // skip cells with answer set already
 
 			int [] hints = col[i].getHints(); // get the list of hints in 
 
