@@ -62,6 +62,21 @@ public class SudokuPuzzle {
 	 */
 	public void solve() {
 		
+		// hint generation
+		for( int i = 0; i < _puzzle.length; i++ ) {
+			for( int j = 0; j < _puzzle[ 0 ].length; j++ ) {
+				if( _puzzle[ i ][ j ].getValue() == 0 ) {
+					Cell[] row = getRow( _puzzle[ i ][ j ].getX() );
+					Cell[] col = getCol( _puzzle[ i ][ j ].getY() );
+					Cell[] qad = getQuadrant( _puzzle[ i ][ j ].getPos() );
+					for( int k = 0; k < row.length; k++ ) {
+						_puzzle[ i ][ j ].removeHint( row[ k ].getValue() );
+						_puzzle[ i ][ j ].removeHint( col[ k ].getValue() );
+						_puzzle[ i ][ j ].removeHint( qad[ k ].getValue() );
+					}
+				}
+			}
+		}
 	}
 	
 	/**
