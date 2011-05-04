@@ -3,11 +3,12 @@
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Cell {
 	
 	/** The array of possible values for this cell */
-	private ArrayList< Integer > hints = new ArrayList< Integer >();
+	private ArrayList< Integer > hints = new ArrayList< Integer >( 9 );
 	
 	private int
 		value, // the cell's  value
@@ -19,6 +20,14 @@ public class Cell {
 	public Cell(int x, int y){
 		this.x = x;
 		this.y = y;
+		hints = ( ArrayList< Integer > )Arrays.asList( 1, 2, 3, 4, 5, 6, 7, 8, 9 );
+		this.myPos = ( ( x / 3 ) * 3 ) + ( y / 3 );
+	}
+	
+	public Cell(int x, int y, int value){
+		this.x = x;
+		this.y = y;
+		setValue( value );
 		this.myPos = ( ( x / 3 ) * 3 ) + ( y / 3 );
 	}
 	
@@ -39,6 +48,7 @@ public class Cell {
 	public void setValue( int value ) {
 		this.value = value;
 		this.hints.clear();
+		SudokuPuzzle.count--;
 	}
 
 	/**
