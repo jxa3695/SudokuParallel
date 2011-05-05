@@ -99,9 +99,21 @@ public class SudokuPuzzle {
 		// hint generation
 		boolean hintGen = true;
 		
-		while( hintGen && count != 0 ) {
+		while(count != 0) {
+			while( hintGen) {
+				hintGen = hintGenerator();
+			}
+			for (int x=0; x < 9; x++) {
+				RCChecker(getRow(x));
+			}
+			hintGenerator();
+			for (int x=0; x < 9; x++) {
+				RCChecker(getCol(x));
+			}
 			hintGen = hintGenerator();
 		}
+		
+		printPuzzle();
 		
 		if( count == 0 ) {
 			System.out.println( "Win!" );
@@ -160,13 +172,6 @@ public class SudokuPuzzle {
 			}
 		}
 		System.out.print(sb.toString());
-	}
-	
-	public void checkRowsCols() {
-		for (int x=0; x < 9; x++) {
-			RCChecker(getCol(x));
-			RCChecker(getRow(x));
-		}
 	}
 
 	/**
