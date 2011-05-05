@@ -51,7 +51,11 @@ public class SudokuPuzzle {
 	 * @return
 	 */
 	public Cell[] getRow(int row) {
-		return _puzzle[row];
+		Cell[] r = new Cell[9];
+		for (int x=0; x < 9; x++) {
+			r[x] = _puzzle[row][x];
+		}
+		return r;
 	}
 	
 	/**
@@ -157,6 +161,13 @@ public class SudokuPuzzle {
 		}
 		System.out.print(sb.toString());
 	}
+	
+	public void checkRowsCols() {
+		for (int x=0; x < 9; x++) {
+			RCChecker(getCol(x));
+			RCChecker(getRow(x));
+		}
+	}
 
 	/**
 	 * Row and Column Checker
@@ -178,14 +189,13 @@ public class SudokuPuzzle {
 				int hintVal = hints.get(j) - 1;
 				if( owner[hintVal] == null ) owner[hintVal] = col[i] ; // record a first seen hints owner
 				hintCounter[ hintVal ]++ ;  // for every hint seen increment its counter
-
 			}
 		}
 		
 		// go through hintCounter for any singlely owned hint(s)
 		for (int i=0; i<9; i++){
 			if (hintCounter[i] == 1) {
-				owner[i].setValue( i );
+				owner[i].setValue( i+1 );
 				//debugger
 				System.out.println(col[i].toString());
 			}
