@@ -1,7 +1,9 @@
 /**
  * Class to hold the puzzle data structure and methods to operate on it
  */
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class SudokuPuzzle {
 
@@ -18,12 +20,28 @@ public class SudokuPuzzle {
 	}
 	
 	/**
-	 * Constructor to initialize with values
+	 * Constructor to initialize with values from a given file
 	 * 
-	 * @param values
+	 * @param filename
 	 */
-	public SudokuPuzzle(int[][] values) {
-		
+	public SudokuPuzzle(String filename) {
+		count = 9 * 9;
+		_puzzle = new Cell[9][9];
+		try {
+			Scanner scan = new Scanner(new File(filename));
+			scan.useDelimiter(",");
+			for (int x=0; x < 9; x++) {
+				for (int y=0; y < 9; y++) {
+					if (scan.hasNextInt()) {
+						int num = scan.nextInt();
+						_puzzle[x][y] = new Cell(x, y, num);
+					}
+				}
+				scan.nextLine();
+			}
+		} catch (Exception e) {
+			System.out.println(e.toString());
+		}
 	}
 	
 	/**
@@ -56,7 +74,17 @@ public class SudokuPuzzle {
 	 * @return
 	 */
 	public Cell[] getQuadrant(int quad) {
-		return new Cell[9];
+		Cell[] quadrant = new Cell[9];
+		int i = quad / 3;
+		int j = quad % 3;
+		int index = 0;
+		for (int x=i*3; x < i*3+3; x++) {
+			for (int y=j*3; y < j*3+3; y++) {
+				quadrant[index] = _puzzle[x][y];
+				index++;
+			}
+		}
+		return quadrant;
 	}
 	
 	/**
@@ -88,16 +116,19 @@ public class SudokuPuzzle {
 					Cell[] qad = getQuadrant( _puzzle[ i ][ j ].getPos() );
 					for( int k = 0; k < row.length; k++ ) {
 						if( row[ k ].getValue() != 0 ) {
-							_puzzle[ i ][ j ].removeHint( row[ k ].getValue() );
-							changed = true;
+							if (_puzzle[ i ][ j ].removeHint( row[ k ].getValue() )) {
+								changed = true;
+							}
 						}
 						if( col[ k ].getValue() != 0 ) {
-							_puzzle[ i ][ j ].removeHint( col[ k ].getValue() );
-							changed = true;
+							if (_puzzle[ i ][ j ].removeHint( col[ k ].getValue() )) {
+								changed = true;
+							}
 						}
 						if( qad[ k ].getValue() != 0 ) {
-							_puzzle[ i ][ j ].removeHint( qad[ k ].getValue() );
-							changed = true;
+							if (_puzzle[ i ][ j ].removeHint( qad[ k ].getValue() )) {
+								changed = true;
+							}
 						}
 					}
 				}
@@ -110,16 +141,30 @@ public class SudokuPuzzle {
 	 * Print the contents of the puzzle
 	 */
 	public void printPuzzle() {
-		
+		StringBuilder sb = new StringBuilder();
+		for (int x=0; x < 9; x++) {
+			for (int y=0; y < 9; y++) {
+				sb.append(_puzzle[x][y].getValue());
+				sb.append(" ");
+				if (y % 3 == 2) {
+					sb.append(" ");
+				}
+			}
+			sb.append("\n");
+			if (x % 3 == 2) {
+				sb.append("\n");
+			}
+		}
+		System.out.print(sb.toString());
 	}
-	
-	
-	
-	
-	/* Row and Column checker */
-	// collect any hints that is not shared by any other.
-	// if hint is not shared by any other, it is the answer/Value for its owner.
-	void RCChecker( Cell [] col ){
+
+	/**
+	 * Row and Column Checker
+	 * 
+	 * collect any hints that is not shared by any other.
+	 * if hint is not shared by any other, it is the answer/Value for its owner.
+	 */
+	public void RCChecker( Cell [] col ){
 		// index of these array represent the hint with the value of index+1
 		int [] hintCounter = new int[9]; // counter for hint
 		Cell [] owner = new Cell[9]; // first encountered ownere for hint

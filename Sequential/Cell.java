@@ -15,20 +15,22 @@ public class Cell {
 		x, y, // cell's global coordinate
 		myPos; // representation of which 3x3 matrix it is
 	
-	
-	/** Constructor **/
-	public Cell(int x, int y){
-		this.x = x;
-		this.y = y;
-		hints = ( ArrayList< Integer > )Arrays.asList( 1, 2, 3, 4, 5, 6, 7, 8, 9 );
-		this.myPos = ( ( x / 3 ) * 3 ) + ( y / 3 );
-	}
-	
+	/**
+	 * Cell constructor
+	 * 
+	 * @param x
+	 * @param y
+	 * @param value
+	 */
 	public Cell(int x, int y, int value){
 		this.x = x;
 		this.y = y;
-		setValue( value );
 		this.myPos = ( ( x / 3 ) * 3 ) + ( y / 3 );
+		if (value == 0) {
+			hints = new ArrayList< Integer >(Arrays.asList( 1, 2, 3, 4, 5, 6, 7, 8, 9 ));
+		} else {
+			setValue( value );
+		}
 	}
 	
 	/**
@@ -64,11 +66,18 @@ public class Cell {
 	 * Remove a number from this cell's possible list of value
 	 * 
 	 * @param the number that is not possible for this cell to be
+	 * @return whether or not the number was removed
 	 */
-	public void removeHint(int num){
-		hints.remove( hints.indexOf(num) );
-		if (hints.size() == 1)
-			setValue(hints.get(0));
+	public boolean removeHint(int num){
+		boolean removed = false;
+		if (hints.contains(num)) {
+			hints.remove( hints.indexOf(num) );
+			removed = true;
+			if (hints.size() == 1) {
+				setValue(hints.get(0));
+			}
+		}
+		return removed;
 	}
 	
 	/**
