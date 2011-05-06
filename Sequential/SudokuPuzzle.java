@@ -8,30 +8,25 @@ import java.util.Scanner;
 public class SudokuPuzzle {
 
 	public static int count;
-	
+	public static int N;
+	public static int sqrtN;
 	private Cell[][] _puzzle;
-	
-	/**
-	 * Default constructor
-	 */
-	public SudokuPuzzle() {
-		count = 9 * 9;
-		_puzzle = new Cell[9][9];
-	}
 	
 	/**
 	 * Constructor to initialize with values from a given file
 	 * 
 	 * @param filename
 	 */
-	public SudokuPuzzle(String filename) {
-		count = 9 * 9;
-		_puzzle = new Cell[9][9];
+	public SudokuPuzzle(String filename, int n) {
+		N = n;
+		sqrtN = (int)Math.sqrt(N);
+		count = N * N;
+		_puzzle = new Cell[N][N];
 		try {
 			Scanner scan = new Scanner(new File(filename));
 			scan.useDelimiter(",");
-			for (int x=0; x < 9; x++) {
-				for (int y=0; y < 9; y++) {
+			for (int x=0; x < N; x++) {
+				for (int y=0; y < N; y++) {
 					if (scan.hasNextInt()) {
 						int num = scan.nextInt();
 						_puzzle[x][y] = new Cell(x, y, num);
@@ -51,8 +46,8 @@ public class SudokuPuzzle {
 	 * @return
 	 */
 	public Cell[] getRow(int row) {
-		Cell[] r = new Cell[9];
-		for (int x=0; x < 9; x++) {
+		Cell[] r = new Cell[N];
+		for (int x=0; x < N; x++) {
 			r[x] = _puzzle[row][x];
 		}
 		return r;
@@ -65,8 +60,8 @@ public class SudokuPuzzle {
 	 * @return
 	 */
 	public Cell[] getCol(int col) {
-		Cell[] column = new Cell[9];
-		for (int x=0; x < 9; x++) {
+		Cell[] column = new Cell[N];
+		for (int x=0; x < N; x++) {
 			column[x] = _puzzle[x][col];
 		}
 		return column;
@@ -78,12 +73,12 @@ public class SudokuPuzzle {
 	 * @return
 	 */
 	public Cell[] getQuadrant(int quad) {
-		Cell[] quadrant = new Cell[9];
-		int i = quad / 3;
-		int j = quad % 3;
+		Cell[] quadrant = new Cell[N];
+		int i = quad / sqrtN;
+		int j = quad % sqrtN;
 		int index = 0;
-		for (int x=i*3; x < i*3+3; x++) {
-			for (int y=j*3; y < j*3+3; y++) {
+		for (int x=i*sqrtN; x < i*sqrtN+sqrtN; x++) {
+			for (int y=j*sqrtN; y < j*sqrtN+sqrtN; y++) {
 				quadrant[index] = _puzzle[x][y];
 				index++;
 			}
@@ -91,68 +86,57 @@ public class SudokuPuzzle {
 		return quadrant;
 	}
 	
-	public int[][] getPuzzleValues() {
-		int[][] values = new int[9][9];
-		for (int x=0; x < 9; x++) {
-			for (int y=0; y < 9; y++) {
-				values[x][y] = _puzzle[x][y].getValue();
-			}
-		}
-		return values;
+	// *****************SMP Methods****************************
+	
+	public void solveSmp() {
+		
 	}
 	
-	public boolean equal(int[][] one, int[][] two) {
-		boolean equal = true;
-		for (int x=0; x < 9; x++) {
-			for (int y=0; y < 9; y++) {
-				if (one[x][y] != two[x][y]) {
-					equal = false;
-					break;
-				}
-			}
-		}
-		return equal;
-	}
+	
+	// *****************Sequential Methods****************************
 	
 	/**
 	 * Solve the puzzle
 	 */
-	public void solve() {
+	public void solveSeq() {
 		
 		// hint generation
 		boolean hintGen = true;
 		boolean changed = false;
 		int iterations = 0;
 		
-		while(count != 0) {
+		while(true) {
+			changed = false;
 			iterations++;
 			while( hintGen ) {
 				hintGen = hintGenerator();
 			}
-			int[][] original = getPuzzleValues();
-			for (int x=0; x < 9; x++) {
+			for (int x=0; x < N; x++) {
 				changed = changed || RCChecker(getRow(x));
 			}
 			if( changed == true ) {
 				hintGen = true;
 				continue;
 			}
-			for (int x=0; x < 9; x++) {
+			for (int x=0; x < N; x++) {
 				changed = changed || RCChecker(getCol(x));
 			}
 			if( changed == true ) {
 				hintGen = true;
 				continue;
 			}
-			for (int x=0; x < 9; x++) {
+			for (int x=0; x < N; x++) {
 				changed = changed || RCChecker(getQuadrant(x));
 			}
 			if( changed == true ) {
 				hintGen = true;
 				continue;
-			}
-			if (equal(getPuzzleValues(), original)) {
-				break;
+			} else {
+				if (count == 0) {
+					break;
+				} else {
+					
+				}
 			}
 		}
 		
@@ -198,27 +182,6 @@ public class SudokuPuzzle {
 	}
 	
 	/**
-	 * Print the contents of the puzzle
-	 */
-	public void printPuzzle() {
-		StringBuilder sb = new StringBuilder();
-		for (int x=0; x < 9; x++) {
-			for (int y=0; y < 9; y++) {
-				sb.append(_puzzle[x][y].getValue());
-				sb.append(" ");
-				if (y % 3 == 2) {
-					sb.append(" ");
-				}
-			}
-			sb.append("\n");
-			if (x % 3 == 2) {
-				sb.append("\n");
-			}
-		}
-		System.out.print(sb.toString());
-	}
-
-	/**
 	 * Row and Column Checker
 	 * 
 	 * collect any hints that is not shared by any other.
@@ -227,10 +190,10 @@ public class SudokuPuzzle {
 	public boolean RCChecker( Cell [] col ){
 		boolean changed = false;
 		// index of these array represent the hint with the value of index+1
-		int [] hintCounter = new int[9]; // counter for hint
-		Cell [] owner = new Cell[9]; // first encountered ownere for hint
+		int [] hintCounter = new int[N]; // counter for hint
+		Cell [] owner = new Cell[N]; // first encountered ownere for hint
 
-		for (int i=0; i<9; i++){ //iterate through the cells in col
+		for (int i=0; i<N; i++){ //iterate through the cells in col
 			if ( col[i].getValue()>0 ) continue; // skip cells with answer set already
 
 			ArrayList<Integer> hints = col[i].getHints(); // get the list of hints in 
@@ -243,7 +206,7 @@ public class SudokuPuzzle {
 		}
 		
 		// go through hintCounter for any singlely owned hint(s)
-		for (int i=0; i<9; i++){
+		for (int i=0; i<N; i++){
 			if (hintCounter[i] == 1) {
 				changed = true;
 				owner[i].setValue( i+1 );
@@ -254,5 +217,32 @@ public class SudokuPuzzle {
 		
 		return changed;
 	}
+	
+	/**
+	 * Print the contents of the puzzle
+	 */
+	public void printPuzzle() {
+		StringBuilder sb = new StringBuilder();
+		for (int x=0; x < N; x++) {
+			for (int y=0; y < N; y++) {
+				try {
+				sb.append(_puzzle[x][y].getValue());
+				} catch (Exception e) {
+					System.out.println("You messed up the input at (" + x + "," + y + ")");
+				}
+				sb.append(" ");
+				if (y % sqrtN == (sqrtN-1)) {
+					sb.append(" ");
+				}
+			}
+			sb.append("\n");
+			if (x % sqrtN == (sqrtN-1)) {
+				sb.append("\n");
+			}
+		}
+		System.out.print(sb.toString());
+	}
+
+	
 	
 }
