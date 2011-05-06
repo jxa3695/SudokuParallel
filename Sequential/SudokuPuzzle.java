@@ -91,6 +91,29 @@ public class SudokuPuzzle {
 		return quadrant;
 	}
 	
+	public int[][] getPuzzleValues() {
+		int[][] values = new int[9][9];
+		for (int x=0; x < 9; x++) {
+			for (int y=0; y < 9; y++) {
+				values[x][y] = _puzzle[x][y].getValue();
+			}
+		}
+		return values;
+	}
+	
+	public boolean equal(int[][] one, int[][] two) {
+		boolean equal = true;
+		for (int x=0; x < 9; x++) {
+			for (int y=0; y < 9; y++) {
+				if (one[x][y] != two[x][y]) {
+					equal = false;
+					break;
+				}
+			}
+		}
+		return equal;
+	}
+	
 	/**
 	 * Solve the puzzle
 	 */
@@ -98,11 +121,14 @@ public class SudokuPuzzle {
 		
 		// hint generation
 		boolean hintGen = true;
+		int iterations = 0;
 		
 		while(count != 0) {
+			iterations++;
 			while( hintGen) {
 				hintGen = hintGenerator();
 			}
+			int[][] original = getPuzzleValues();
 			for (int x=0; x < 9; x++) {
 				RCChecker(getRow(x));
 			}
@@ -110,10 +136,18 @@ public class SudokuPuzzle {
 			for (int x=0; x < 9; x++) {
 				RCChecker(getCol(x));
 			}
+			hintGenerator();
+			for (int x=0; x < 9; x++) {
+				RCChecker(getQuadrant(x));
+			}
 			hintGen = hintGenerator();
+			if (equal(getPuzzleValues(), original)) {
+				break;
+			}
 		}
 		
 		printPuzzle();
+		System.out.println(iterations + " iterations performed");
 		
 		if( count == 0 ) {
 			System.out.println( "Win!" );
