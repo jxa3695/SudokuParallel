@@ -1,13 +1,15 @@
+import edu.rit.pj.Comm;
 
-public class SequentialSudoku {
 
+public class SmpSudoku {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		Comm.init(args);
 		
 		if (args.length != 2) {
-			System.out.println("Usage: java SequentialSudoku N infile");
+			System.out.println("Usage: java SmpSudoku N infile");
 			System.exit(0);
 		}
 		
@@ -17,10 +19,9 @@ public class SequentialSudoku {
 		SudokuPuzzle puzzle = new SudokuPuzzle(filename, n);
 		puzzle.printPuzzle();
 		long start = System.currentTimeMillis();
-		puzzle.solveSeq();
+		puzzle.solveSmp();
 		long stop = System.currentTimeMillis();
 		
 		System.out.println((stop - start) + " msec");
 	}
-
 }
