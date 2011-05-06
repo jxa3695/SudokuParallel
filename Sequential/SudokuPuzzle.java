@@ -121,26 +121,36 @@ public class SudokuPuzzle {
 		
 		// hint generation
 		boolean hintGen = true;
+		boolean changed = false;
 		int iterations = 0;
 		
 		while(count != 0) {
 			iterations++;
-			while( hintGen) {
+			while( hintGen ) {
 				hintGen = hintGenerator();
 			}
 			int[][] original = getPuzzleValues();
 			for (int x=0; x < 9; x++) {
-				RCChecker(getRow(x));
+				changed = changed || RCChecker(getRow(x));
 			}
-			hintGenerator();
+			if( changed == true ) {
+				hintGen = true;
+				continue;
+			}
 			for (int x=0; x < 9; x++) {
-				RCChecker(getCol(x));
+				changed = changed || RCChecker(getCol(x));
 			}
-			hintGenerator();
+			if( changed == true ) {
+				hintGen = true;
+				continue;
+			}
 			for (int x=0; x < 9; x++) {
-				RCChecker(getQuadrant(x));
+				changed = changed || RCChecker(getQuadrant(x));
 			}
-			hintGen = hintGenerator();
+			if( changed == true ) {
+				hintGen = true;
+				continue;
+			}
 			if (equal(getPuzzleValues(), original)) {
 				break;
 			}
@@ -214,7 +224,8 @@ public class SudokuPuzzle {
 	 * collect any hints that is not shared by any other.
 	 * if hint is not shared by any other, it is the answer/Value for its owner.
 	 */
-	public void RCChecker( Cell [] col ){
+	public boolean RCChecker( Cell [] col ){
+		boolean changed = false;
 		// index of these array represent the hint with the value of index+1
 		int [] hintCounter = new int[9]; // counter for hint
 		Cell [] owner = new Cell[9]; // first encountered ownere for hint
@@ -234,11 +245,14 @@ public class SudokuPuzzle {
 		// go through hintCounter for any singlely owned hint(s)
 		for (int i=0; i<9; i++){
 			if (hintCounter[i] == 1) {
+				changed = true;
 				owner[i].setValue( i+1 );
 				//debugger
 				System.out.println(col[i].toString());
 			}
 		}
+		
+		return changed;
 	}
 	
 }
