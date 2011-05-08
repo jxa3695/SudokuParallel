@@ -15,10 +15,17 @@ public class SequentialSudoku {
 		String filename = args[1];
 		
 		SudokuPuzzle puzzle = new SudokuPuzzle(filename, n);
+		System.out.println("Initial Puzzle");
 		puzzle.printPuzzle();
 		long start = System.currentTimeMillis();
 		puzzle.solveSeq();
 		long stop = System.currentTimeMillis();
+		if (SudokuPuzzle.count > 0) {
+			System.out.println("\nState of the puzzle when the algorithm failed");
+		} else {
+			System.out.println("\nSolved Puzzle");
+		}
+		puzzle.printPuzzle();
 		
 		System.out.println((stop - start) + " msec");
 	}

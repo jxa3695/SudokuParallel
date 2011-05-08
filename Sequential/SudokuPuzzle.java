@@ -10,6 +10,7 @@ import edu.rit.pj.IntegerForLoop;
 import edu.rit.pj.ParallelRegion;
 import edu.rit.pj.ParallelTeam;
 import edu.rit.pj.reduction.SharedBoolean;
+import edu.rit.pj.reduction.SharedInteger;
 
 public class SudokuPuzzle {
 
@@ -20,6 +21,8 @@ public class SudokuPuzzle {
 
 	private static SharedBoolean sharedHintGen;
 	private static SharedBoolean sharedChanged;
+	
+	public static SharedInteger sharedCount;
 
 	/**
 	 * Constructor to initialize with values from a given file
@@ -30,6 +33,7 @@ public class SudokuPuzzle {
 		N = n;
 		sqrtN = (int) Math.sqrt(N);
 		count = N * N;
+		sharedCount = new SharedInteger(count);
 		_puzzle = new Cell[N][N];
 		try {
 			Scanner scan = new Scanner(new File(filename));
@@ -95,34 +99,92 @@ public class SudokuPuzzle {
 		return quadrant;
 	}
 
-	// *****************SMP Methods****************************
-
+	// ******************************SMP Methods********************************
+	/**
+	 * Solve the puzzle using a SMP
+	 */
 	public void solveSmp() throws Exception {
+		ParallelTeam pt = new ParallelTeam();
 
 		// hint generation
 		sharedHintGen = new SharedBoolean(true);
-		sharedChanged = new SharedBoolean(false);
+		sharedChanged = new SharedBoolean();
 
 		int iterations = 0;
 
 		while (true) {
+			sharedChanged.set(false);
 			iterations++;
 			while (sharedHintGen.get()) {
 				sharedHintGen.set(false);
-				new ParallelTeam().execute(new ParallelRegion() {
+				pt.execute(new ParallelRegion() {
 					boolean hintGen_thread;
 
 					public void run() throws Exception {
-						hintGen_thread = hintGeneratorSmp(getThreadIndex());
-					}
 
-					public void finish() {
-						sharedHintGen.set(hintGen_thread || sharedHintGen.get());
+						execute(0, N - 1, new IntegerForLoop() {
+
+							public void run(int first, int last) {
+								for (int i = first; i <= last; i++) {
+									hintGen_thread = hintGen_thread
+											|| hintGeneratorSmp(0, i);
+								}
+							}
+
+							public void finish() {
+								sharedHintGen.set(hintGen_thread
+										|| sharedHintGen.get());
+							}
+						}, BarrierAction.WAIT);
+					}
+				});
+				pt.execute(new ParallelRegion() {
+					boolean hintGen_thread;
+
+					public void run() throws Exception {
+
+						execute(0, N - 1, new IntegerForLoop() {
+
+							public void run(int first, int last) {
+								for (int i = first; i <= last; i++) {
+									hintGen_thread = hintGen_thread
+											|| hintGeneratorSmp(1, i);
+								}
+							}
+
+							public void finish() {
+								sharedHintGen.set(hintGen_thread
+										|| sharedHintGen.get());
+							}
+						}, BarrierAction.WAIT);
+					}
+				});
+				pt.execute(new ParallelRegion() {
+					boolean hintGen_thread;
+
+					public void run() throws Exception {
+
+						execute(0, N - 1, new IntegerForLoop() {
+
+							public void run(int first, int last) {
+								for (int i = first; i <= last; i++) {
+									hintGen_thread = hintGen_thread
+											|| hintGeneratorSmp(2, i);
+								}
+							}
+
+							public void finish() {
+								sharedHintGen.set(hintGen_thread
+										|| sharedHintGen.get());
+							}
+						}, BarrierAction.WAIT);
 					}
 				});
 			}
-
-			new ParallelTeam().execute(new ParallelRegion() {
+			if (sharedCount.get() == 0) {
+				break;
+			}
+			pt.execute(new ParallelRegion() {
 
 				boolean changed_thread = false;
 
@@ -136,22 +198,19 @@ public class SudokuPuzzle {
 										|| rowColChecker(getRow(i));
 							}
 						}
-					}, new BarrierAction() {
 
-						@Override
-						public void run() throws Exception {
+						public void finish() {
 							sharedChanged.set(changed_thread
 									|| sharedChanged.get());
 						}
-
-					});
+					}, BarrierAction.WAIT);
 				}
 			});
 			if (sharedChanged.get()) {
 				sharedHintGen.set(true);
 				continue;
 			}
-			new ParallelTeam().execute(new ParallelRegion() {
+			pt.execute(new ParallelRegion() {
 
 				boolean changed_thread = false;
 
@@ -165,22 +224,19 @@ public class SudokuPuzzle {
 										|| rowColChecker(getCol(i));
 							}
 						}
-					}, new BarrierAction() {
 
-						@Override
-						public void run() throws Exception {
+						public void finish() {
 							sharedChanged.set(changed_thread
 									|| sharedChanged.get());
 						}
-
-					});
+					}, BarrierAction.WAIT);
 				}
 			});
 			if (sharedChanged.get()) {
 				sharedHintGen.set(true);
 				continue;
 			}
-			new ParallelTeam().execute(new ParallelRegion() {
+			pt.execute(new ParallelRegion() {
 
 				boolean changed_thread = false;
 
@@ -194,56 +250,52 @@ public class SudokuPuzzle {
 										|| rowColChecker(getQuadrant(i));
 							}
 						}
-					}, new BarrierAction() {
 
-						@Override
-						public void run() throws Exception {
+						public void finish() {
 							sharedChanged.set(changed_thread
 									|| sharedChanged.get());
 						}
-
-					});
+					}, BarrierAction.WAIT);
 				}
 			});
 			if (sharedChanged.get()) {
 				sharedHintGen.set(true);
 				continue;
 			} else {
-				if (count == 0) {
+				if (sharedCount.get() == 0) {
 					break;
 				} else {
-
+					// No solution can be found using our algorithms, break out
+					// or use another method
+					break;
 				}
 			}
-			
 		}
 	}
 
-	public boolean hintGeneratorSmp(int rank) {
-		rank++;
+	/**
+	 * Hint Generator modified to work on SMP
+	 * @param type - 0-row, 1-col, 2-quad
+	 * @param num - row/col/quad number
+	 * @return whether something was changed
+	 */
+	public boolean hintGeneratorSmp(int type, int num) {
 		boolean changed = false;
 
-		for (int i = 0; i < _puzzle.length; i++) {
-			for (int j = 0; j < _puzzle[0].length; j++) {
-				if (_puzzle[i][j].getValue() == 0) {
-					Cell[] row = getRow(_puzzle[i][j].getX());
-					Cell[] col = getCol(_puzzle[i][j].getY());
-					Cell[] qad = getQuadrant(_puzzle[i][j].getPos());
-					for (int k = 0; k < row.length; k++) {
-						if (row[k].getValue() == rank) {
-							if (_puzzle[i][j].removeHint(rank)) {
-								changed = true;
-							}
-						}
-						if (col[k].getValue() == rank) {
-							if (_puzzle[i][j].removeHint(rank)) {
-								changed = true;
-							}
-						}
-						if (qad[k].getValue() == rank) {
-							if (_puzzle[i][j].removeHint(rank)) {
-								changed = true;
-							}
+		Cell[] holder;
+		if (type == 0) {
+			holder = getRow(num);
+		} else if (type == 1) {
+			holder = getCol(num);
+		} else {
+			holder = getQuadrant(num);
+		}
+		for (int y = 0; y < N; y++) {
+			if (holder[y].getValue() != 0) {
+				for (int i = 0; i < holder.length; i++) {
+					if (holder[i].getValue() == 0) {
+						if (holder[i].removeHint(holder[y].getValue())) {
+							changed = true;
 						}
 					}
 				}
@@ -251,9 +303,16 @@ public class SudokuPuzzle {
 		}
 		return changed;
 	}
+	
+	// ***************************Cluster Methods******************************
+	/**
+	 * Solve the puzzle using a cluster
+	 */
+	public void solveClu() {
+		
+	}
 
-
-	// *****************Sequential Methods****************************
+	// **************************Sequential Methods****************************
 
 	/**
 	 * Solve the puzzle
@@ -295,17 +354,11 @@ public class SudokuPuzzle {
 				if (count == 0) {
 					break;
 				} else {
-
+					break;
 				}
 			}
 		}
 
-		printPuzzle();
-		System.out.println(iterations + " iterations performed");
-
-		if (count == 0) {
-			System.out.println("Win!");
-		}
 	}
 
 	public boolean hintGeneratorSeq() {
@@ -375,7 +428,7 @@ public class SudokuPuzzle {
 				changed = true;
 				owner[i].setValue(i + 1);
 				// debugger
-				System.out.println(col[i].toString());
+				//System.out.println(col[i].toString());
 			}
 		}
 

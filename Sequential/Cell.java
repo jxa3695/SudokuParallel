@@ -54,7 +54,10 @@ public class Cell {
 	public void setValue(int value) {
 		this.value = value;
 		this.hints.clear();
+		
+		//TODO: figure a way to tell if it is being run in parallel
 		SudokuPuzzle.count--;
+		SudokuPuzzle.sharedCount.decrementAndGet();
 	}
 
 	/**

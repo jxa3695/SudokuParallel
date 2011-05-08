@@ -17,10 +17,18 @@ public class SmpSudoku {
 		String filename = args[1];
 		
 		SudokuPuzzle puzzle = new SudokuPuzzle(filename, n);
+		System.out.println("Inital Puzzle");
 		puzzle.printPuzzle();
 		long start = System.currentTimeMillis();
 		puzzle.solveSmp();
 		long stop = System.currentTimeMillis();
+		if (SudokuPuzzle.sharedCount.get() > 0) {
+			System.out.println("\nState of the puzzle when the algorithm failed");
+			System.out.println("count = " + SudokuPuzzle.sharedCount.get());
+		} else {
+			System.out.println("\nSolved Puzzle");
+		}
+		puzzle.printPuzzle();
 		
 		System.out.println((stop - start) + " msec");
 	}
