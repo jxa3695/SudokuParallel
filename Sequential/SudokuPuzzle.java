@@ -21,7 +21,7 @@ public class SudokuPuzzle {
 
 	private static SharedBoolean sharedHintGen;
 	private static SharedBoolean sharedChanged;
-	
+
 	public static SharedInteger sharedCount;
 
 	/**
@@ -121,22 +121,22 @@ public class SudokuPuzzle {
 					boolean hintGen_thread;
 
 					public void run() throws Exception {
-						for (int z=0; z < 3; z++) {
+						for (int z = 0; z < 3; z++) {
 							final int zz = z;
-						execute(0, N - 1, new IntegerForLoop() {
+							execute(0, N - 1, new IntegerForLoop() {
 
-							public void run(int first, int last) {
-								for (int i = first; i <= last; i++) {
-									hintGen_thread = hintGen_thread
-											|| hintGeneratorSmp(zz, i);
+								public void run(int first, int last) {
+									for (int i = first; i <= last; i++) {
+										hintGen_thread = hintGen_thread
+												|| hintGeneratorSmp(zz, i);
+									}
 								}
-							}
 
-							public void finish() {
-								sharedHintGen.set(hintGen_thread
-										|| sharedHintGen.get());
-							}
-						}, BarrierAction.WAIT);
+								public void finish() {
+									sharedHintGen.set(hintGen_thread
+											|| sharedHintGen.get());
+								}
+							}, BarrierAction.WAIT);
 						}
 					}
 				});
@@ -150,26 +150,26 @@ public class SudokuPuzzle {
 				boolean changed_thread = false;
 
 				public void run() throws Exception {
-					for (int z=0; z < 3; z++) {
-					final int zz = z;
-					execute(0, N - 1, new IntegerForLoop() {
+					for (int z = 0; z < 3; z++) {
+						final int zz = z;
+						execute(0, N - 1, new IntegerForLoop() {
 
-						public void run(int first, int last) {
-							for (int i = first; i <= last; i++) {
-								changed_thread = changed_thread
-										|| rowColChecker(zz, i);
+							public void run(int first, int last) {
+								for (int i = first; i <= last; i++) {
+									changed_thread = changed_thread
+											|| rowColChecker(zz, i);
+								}
 							}
-						}
 
-						public void finish() {
-							sharedChanged.set(changed_thread
-									|| sharedChanged.get());
-						}
-					}, BarrierAction.WAIT);
+							public void finish() {
+								sharedChanged.set(changed_thread
+										|| sharedChanged.get());
+							}
+						}, BarrierAction.WAIT);
 					}
 				}
 			});
-			
+
 			if (sharedChanged.get()) {
 				sharedHintGen.set(true);
 				continue;
@@ -187,8 +187,11 @@ public class SudokuPuzzle {
 
 	/**
 	 * Hint Generator modified to work on SMP
-	 * @param type - 0-row, 1-col, 2-quad
-	 * @param num - row/col/quad number
+	 * 
+	 * @param type
+	 *            - 0-row, 1-col, 2-quad
+	 * @param num
+	 *            - row/col/quad number
 	 * @return whether something was changed
 	 */
 	public boolean hintGeneratorSmp(int type, int num) {
@@ -215,13 +218,13 @@ public class SudokuPuzzle {
 		}
 		return changed;
 	}
-	
+
 	// ***************************Cluster Methods******************************
 	/**
 	 * Solve the puzzle using a cluster
 	 */
 	public void solveClu() {
-		
+
 	}
 
 	// **************************Sequential Methods****************************
@@ -242,31 +245,19 @@ public class SudokuPuzzle {
 			while (hintGen) {
 				hintGen = hintGeneratorSeq();
 			}
-			for (int x = 0; x < N; x++) {
-				changed = changed || rowColChecker(0, x);
+			for (int z = 0; z < 3; z++) {
+				for (int x = 0; x < N; x++) {
+					changed = changed || rowColChecker(z, x);
+				}
 			}
-			if (changed == true) {
-				hintGen = true;
-				continue;
-			}
-			for (int x = 0; x < N; x++) {
-				changed = changed || rowColChecker(1, x);
-			}
-			if (changed == true) {
-				hintGen = true;
-				continue;
-			}
-			for (int x = 0; x < N; x++) {
-				changed = changed || rowColChecker(2, x);
-			}
-			if (changed == true) {
+			if (changed) {
 				hintGen = true;
 				continue;
 			} else {
 				if (count == 0) {
 					break;
 				} else {
-					
+					// no solution found
 					break;
 				}
 			}
@@ -314,7 +305,7 @@ public class SudokuPuzzle {
 	 * by any other, it is the answer/Value for its owner.
 	 */
 	public boolean rowColChecker(int type, int num) {
-		
+
 		Cell[] holder;
 		if (type == 0) {
 			holder = getRow(num);
@@ -323,7 +314,7 @@ public class SudokuPuzzle {
 		} else {
 			holder = getQuadrant(num);
 		}
-		
+
 		boolean changed = false;
 		// index of these array represent the hint with the value of index+1
 		int[] hintCounter = new int[N]; // counter for hint
@@ -334,12 +325,13 @@ public class SudokuPuzzle {
 				continue; // skip cells with answer set already
 
 			ArrayList<Integer> hints = holder[i].getHints(); // get the list of
-															// hints in
+																// hints in
 
 			for (int j = 0; j < hints.size(); j++) {
 				int hintVal = hints.get(j) - 1;
 				if (owner[hintVal] == null)
-					owner[hintVal] = holder[i]; // record a first seen hints owner
+					owner[hintVal] = holder[i]; // record a first seen hints
+												// owner
 				hintCounter[hintVal]++; // for every hint seen increment its
 										// counter
 			}
@@ -351,7 +343,7 @@ public class SudokuPuzzle {
 				changed = true;
 				owner[i].setValue(i + 1);
 				// debugger
-				//System.out.println(col[i].toString());
+				// System.out.println(col[i].toString());
 			}
 		}
 
