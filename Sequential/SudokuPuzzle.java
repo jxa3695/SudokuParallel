@@ -121,13 +121,14 @@ public class SudokuPuzzle {
 					boolean hintGen_thread;
 
 					public void run() throws Exception {
-
+						for (int z=0; z < 3; z++) {
+							final int zz = z;
 						execute(0, N - 1, new IntegerForLoop() {
 
 							public void run(int first, int last) {
 								for (int i = first; i <= last; i++) {
 									hintGen_thread = hintGen_thread
-											|| hintGeneratorSmp(0, i);
+											|| hintGeneratorSmp(zz, i);
 								}
 							}
 
@@ -136,50 +137,10 @@ public class SudokuPuzzle {
 										|| sharedHintGen.get());
 							}
 						}, BarrierAction.WAIT);
+						}
 					}
 				});
-				pt.execute(new ParallelRegion() {
-					boolean hintGen_thread;
 
-					public void run() throws Exception {
-
-						execute(0, N - 1, new IntegerForLoop() {
-
-							public void run(int first, int last) {
-								for (int i = first; i <= last; i++) {
-									hintGen_thread = hintGen_thread
-											|| hintGeneratorSmp(1, i);
-								}
-							}
-
-							public void finish() {
-								sharedHintGen.set(hintGen_thread
-										|| sharedHintGen.get());
-							}
-						}, BarrierAction.WAIT);
-					}
-				});
-				pt.execute(new ParallelRegion() {
-					boolean hintGen_thread;
-
-					public void run() throws Exception {
-
-						execute(0, N - 1, new IntegerForLoop() {
-
-							public void run(int first, int last) {
-								for (int i = first; i <= last; i++) {
-									hintGen_thread = hintGen_thread
-											|| hintGeneratorSmp(2, i);
-								}
-							}
-
-							public void finish() {
-								sharedHintGen.set(hintGen_thread
-										|| sharedHintGen.get());
-							}
-						}, BarrierAction.WAIT);
-					}
-				});
 			}
 			if (sharedCount.get() == 0) {
 				break;
@@ -189,13 +150,14 @@ public class SudokuPuzzle {
 				boolean changed_thread = false;
 
 				public void run() throws Exception {
-
+					for (int z=0; z < 3; z++) {
+					final int zz = z;
 					execute(0, N - 1, new IntegerForLoop() {
 
 						public void run(int first, int last) {
 							for (int i = first; i <= last; i++) {
 								changed_thread = changed_thread
-										|| rowColChecker(getRow(i));
+										|| rowColChecker(zz, i);
 							}
 						}
 
@@ -204,60 +166,10 @@ public class SudokuPuzzle {
 									|| sharedChanged.get());
 						}
 					}, BarrierAction.WAIT);
+					}
 				}
 			});
-			if (sharedChanged.get()) {
-				sharedHintGen.set(true);
-				continue;
-			}
-			pt.execute(new ParallelRegion() {
-
-				boolean changed_thread = false;
-
-				public void run() throws Exception {
-
-					execute(0, N - 1, new IntegerForLoop() {
-
-						public void run(int first, int last) {
-							for (int i = first; i <= last; i++) {
-								changed_thread = changed_thread
-										|| rowColChecker(getCol(i));
-							}
-						}
-
-						public void finish() {
-							sharedChanged.set(changed_thread
-									|| sharedChanged.get());
-						}
-					}, BarrierAction.WAIT);
-				}
-			});
-			if (sharedChanged.get()) {
-				sharedHintGen.set(true);
-				continue;
-			}
-			pt.execute(new ParallelRegion() {
-
-				boolean changed_thread = false;
-
-				public void run() throws Exception {
-
-					execute(0, N - 1, new IntegerForLoop() {
-
-						public void run(int first, int last) {
-							for (int i = first; i <= last; i++) {
-								changed_thread = changed_thread
-										|| rowColChecker(getQuadrant(i));
-							}
-						}
-
-						public void finish() {
-							sharedChanged.set(changed_thread
-									|| sharedChanged.get());
-						}
-					}, BarrierAction.WAIT);
-				}
-			});
+			
 			if (sharedChanged.get()) {
 				sharedHintGen.set(true);
 				continue;
@@ -331,21 +243,21 @@ public class SudokuPuzzle {
 				hintGen = hintGeneratorSeq();
 			}
 			for (int x = 0; x < N; x++) {
-				changed = changed || rowColChecker(getRow(x));
+				changed = changed || rowColChecker(0, x);
 			}
 			if (changed == true) {
 				hintGen = true;
 				continue;
 			}
 			for (int x = 0; x < N; x++) {
-				changed = changed || rowColChecker(getCol(x));
+				changed = changed || rowColChecker(1, x);
 			}
 			if (changed == true) {
 				hintGen = true;
 				continue;
 			}
 			for (int x = 0; x < N; x++) {
-				changed = changed || rowColChecker(getQuadrant(x));
+				changed = changed || rowColChecker(2, x);
 			}
 			if (changed == true) {
 				hintGen = true;
@@ -354,6 +266,7 @@ public class SudokuPuzzle {
 				if (count == 0) {
 					break;
 				} else {
+					
 					break;
 				}
 			}
@@ -400,23 +313,33 @@ public class SudokuPuzzle {
 	 * collect any hints that is not shared by any other. if hint is not shared
 	 * by any other, it is the answer/Value for its owner.
 	 */
-	public boolean rowColChecker(Cell[] col) {
+	public boolean rowColChecker(int type, int num) {
+		
+		Cell[] holder;
+		if (type == 0) {
+			holder = getRow(num);
+		} else if (type == 1) {
+			holder = getCol(num);
+		} else {
+			holder = getQuadrant(num);
+		}
+		
 		boolean changed = false;
 		// index of these array represent the hint with the value of index+1
 		int[] hintCounter = new int[N]; // counter for hint
 		Cell[] owner = new Cell[N]; // first encountered ownere for hint
 
 		for (int i = 0; i < N; i++) { // iterate through the cells in col
-			if (col[i].getValue() > 0)
+			if (holder[i].getValue() > 0)
 				continue; // skip cells with answer set already
 
-			ArrayList<Integer> hints = col[i].getHints(); // get the list of
+			ArrayList<Integer> hints = holder[i].getHints(); // get the list of
 															// hints in
 
 			for (int j = 0; j < hints.size(); j++) {
 				int hintVal = hints.get(j) - 1;
 				if (owner[hintVal] == null)
-					owner[hintVal] = col[i]; // record a first seen hints owner
+					owner[hintVal] = holder[i]; // record a first seen hints owner
 				hintCounter[hintVal]++; // for every hint seen increment its
 										// counter
 			}
