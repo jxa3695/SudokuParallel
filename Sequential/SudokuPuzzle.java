@@ -275,14 +275,20 @@ public class SudokuPuzzle {
 			 * the quad this process 'owns'
 			 */
 
+			
 			int startX = rank / sqrtN * sqrtN, startY =
 					rank % sqrtN * sqrtN, endX = startX + 2, endY =
 					startY + 2;
 
 			// deduce hints, and set values..
 			for (int method = 0; method < 3; method++) {
-				for (int i = startX; i < endX; i++)
-					changed = changed || rowColChecker(method, i);
+				if( method < 2 ) {
+					for (int i = (method == 0 ? startX : startY ); i <= ( method == 0 ? endX : endY ); i++) {
+						changed = changed || rowColCheckerClu(method, i);
+					}
+				} else {
+					changed = changed || rowColCheckerClu(method, rank);
+				}
 				if (changed) {
 					hintGeneratorSeq();
 					changed = false;
@@ -295,6 +301,62 @@ public class SudokuPuzzle {
 			System.out.println(rank + " waiting..");
 		}
 
+	}
+	
+	/**
+	 * Row and Column Checker
+	 * 
+	 * collect any hints that is not shared by any other. if hint is not
+	 * shared by any other, it is the answer/Value for its owner.
+	 */
+	public boolean rowColCheckerClu( int type, int rank ) {
+		
+		Cell[] holder;
+		if (type == 0) {
+			holder = getRow(rank);
+		} else if (type == 1) {
+			holder = getCol(rank);
+		} else {
+			holder = getQuadrant(rank);
+		}
+
+		boolean changed = false;
+		// index of these array represent the hint with the value of
+		// index+1
+		int[] hintCounter = new int[N]; // counter for hint
+		Cell[] owner = new Cell[N]; // first encountered owner for hint
+
+		for (int i = 0; i < N; i++) { // iterate through the cells in col
+			if (holder[i].getValue() > 0)
+				continue; // skip cells with answer set already
+
+			ArrayList<Integer> hints = holder[i].getHints(); // get the
+			// list of
+			// hints in
+
+			for (int j = 0; j < hints.size(); j++) {
+				int hintVal = hints.get(j) - 1;
+				if (owner[hintVal] == null)
+					owner[hintVal] = holder[i]; // record a first seen
+				// hints
+				// owner
+				hintCounter[hintVal]++; // for every hint seen increment
+				// its
+				// counter
+			}
+		}
+
+		// go through hintCounter for any singlely owned hint(s)
+		for (int i = 0; i < N; i++) {
+			if (hintCounter[i] == 1 && owner[ i ].getPos() == CluSudoku.rank) {
+				changed = true;
+				owner[i].setValue(i + 1);
+				// debugger
+				// System.out.println(col[i].toString());
+			}
+		}
+
+		return changed;
 	}
 
 	// **************************Sequential
