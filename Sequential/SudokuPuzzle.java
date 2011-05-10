@@ -419,6 +419,7 @@ public class SudokuPuzzle {
 				cell = getNextEmptyCell(cell);
 				if (cell == null) {
 					System.out.println("Brute Force Done, count = " + count);
+					break;
 				}
 			} else {
 				// backtrack
@@ -523,10 +524,11 @@ public class SudokuPuzzle {
 		int x = cell.getX();
 		int y = cell.getY();
 		if (x == 0 && y == 0) {
+			System.out.println("hit beginning");
 			return null;
 		}
 		if (y == 0) {
-			y = 8;
+			y = N-1;
 			x--;
 		} else {
 			y--;
@@ -543,10 +545,10 @@ public class SudokuPuzzle {
 	public Cell getNextCell(Cell cell) {
 		int x = cell.getX();
 		int y = cell.getY();
-		if (x == 8 && y == 8) {
+		if (x == N-1 && y == N-1) {
 			return null;
 		}
-		if (y == 8) {
+		if (y == N-1) {
 			y = 0;
 			x++;
 		} else {
@@ -579,5 +581,35 @@ public class SudokuPuzzle {
 			}
 		}
 		System.out.print(sb.toString());
+	}
+	
+	/**
+	 * Print the contents of the puzzle
+	 */
+	static public String printBrutePuzzle() {
+		StringBuilder sb = new StringBuilder();
+		for (int x = 0; x < N; x++) {
+			for (int y = 0; y < N; y++) {
+				try {
+					if (_puzzle[x][y].getValue() != 0) {
+						sb.append(_puzzle[x][y].getValue());
+					} else {
+						sb.append(_puzzle[x][y].getTempValue());
+					}
+				} catch (Exception e) {
+					System.out.println("You messed up the input at (" + x + ","
+							+ y + ")");
+				}
+				sb.append(" ");
+				if (y % sqrtN == (sqrtN - 1)) {
+					sb.append(" ");
+				}
+			}
+			sb.append("\n");
+			if (x % sqrtN == (sqrtN - 1)) {
+				sb.append("\n");
+			}
+		}
+		return sb.toString();
 	}
 }
