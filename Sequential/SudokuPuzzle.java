@@ -16,14 +16,19 @@ import edu.rit.pj.Comm;
 import edu.rit.util.Range;
 import edu.rit.mp.IntegerBuf;
 import edu.rit.mp.ObjectBuf;
+
 public class SudokuPuzzle {
-	
+
 	public static int count;
+
 	public static int N;
+
 	public static int sqrtN;
+
 	private static Cell[][] _puzzle;
 
 	private static SharedBoolean sharedHintGen;
+
 	private static SharedBoolean sharedChanged;
 
 	public static SharedInteger sharedCount;
@@ -103,7 +108,8 @@ public class SudokuPuzzle {
 		return quadrant;
 	}
 
-	// ******************************SMP Methods********************************
+	// ******************************SMP
+	// Methods********************************
 	/**
 	 * Solve the puzzle using a SMP
 	 */
@@ -131,8 +137,10 @@ public class SudokuPuzzle {
 
 								public void run(int first, int last) {
 									for (int i = first; i <= last; i++) {
-										hintGen_thread = hintGen_thread
-												|| hintGeneratorSmp(zz, i);
+										hintGen_thread =
+												hintGen_thread
+														|| hintGeneratorSmp(
+																zz, i);
 
 									}
 								}
@@ -161,8 +169,10 @@ public class SudokuPuzzle {
 
 							public void run(int first, int last) {
 								for (int i = first; i <= last; i++) {
-									changed_thread = changed_thread
-											|| rowColChecker(zz, i);
+									changed_thread =
+											changed_thread
+													|| rowColChecker(
+															zz, i);
 								}
 							}
 
@@ -182,7 +192,8 @@ public class SudokuPuzzle {
 				if (sharedCount.get() == 0) {
 					break;
 				} else {
-					// No solution can be found using our algorithms, break out
+					// No solution can be found using our algorithms, break
+					// out
 					// or use another method
 					break;
 				}
@@ -214,7 +225,8 @@ public class SudokuPuzzle {
 			if (holder[y].getValue() != 0) {
 				for (int i = 0; i < holder.length; i++) {
 					if (holder[i].getValue() == 0) {
-						if (holder[i].removeHint(holder[y].getValue())) {
+						if (holder[i]
+								.removeHint(holder[y].getValue())) {
 							changed = true;
 						}
 					}
@@ -224,66 +236,69 @@ public class SudokuPuzzle {
 		return changed;
 	}
 
-	// ***************************Cluster Methods******************************
+	// ***************************Cluster
+	// Methods******************************
 	/**
 	 * Solve the puzzle using a cluster
 	 */
-	public void solveClu(Comm world, int rank, int size) throws Exception {
-		
+	public void solveClu(Comm world, int rank, int size)
+			throws Exception {
+
 		// slice matrix based on size
-		Range[] ranges = new Range(0, N-1).subranges(size); 
+		Range[] ranges = new Range(0, N - 1).subranges(size);
 
 		Range range = ranges[rank];
-		int lb = range.lb(),
-		 	ub = range.ub();
+		int lb = range.lb(), ub = range.ub();
 
+		Range[] quadRange = new Range(0, N - 1).subranges(sqrtN);
+		ObjectBuf<Cell>[] patchbufs =
+				ObjectBuf.patchBuffers(_puzzle, quadRange, quadRange);
+		// hintGEn!
+		//int quadCount = ub - lb;
+		//boolean[] quadComplete = new boolean[quadCount + 1];
 
-		Range[] quadRange = new Range(0, N-1).subranges(sqrtN); 
-		ObjectBuf<Cell>[] patchbufs =  ObjectBuf.patchBuffers(_puzzle, quadRange, quadRange);
-		//hintGEn!
-		int quadCount= ub-lb;
-		boolean [] quadComplete = new boolean[quadCount+1];
-		
-		
-		
-		for(;;){
+		for (;;) {
 			// process retires if all of its own ed cell is solved
-			for (int p=lb; p<=ub; p++){ // traverse quads
-				boolean changed = false;
-				
-				if ( quadComplete[ Math.abs(p-lb) ] ) continue;
-				ObjectBuf<Cell> mypatch = patchbufs[p];
+			boolean changed = false;
 
-				// int plb = mypatch.lb(),
+			//if (quadComplete[rank])
+			//	continue;
+			ObjectBuf<Cell> mypatch = patchbufs[rank];
 
+			// int plb = mypatch.lb(),
+			
+			/*
+			 * start x should be your range lb and end x should be your range ub
+			 * for the quadrants this process is responsible. rowColChecker should be 
+			 * altered to a quadSolverCluster so that the same things happen in rowColChecker
+			 * in quadSolverCluster, the difference being quadSolverCluster only alters
+			 * the quad this process 'owns'
+			 */
 
-				int startX = p / sqrtN * sqrtN,
-					startY =  p % sqrtN * sqrtN,
-					endX = startX + 2,
-					endY = startY + 2;
+			int startX = rank / sqrtN * sqrtN, startY =
+					rank % sqrtN * sqrtN, endX = startX + 2, endY =
+					startY + 2;
 
-				// deduce hints, and set values..
-				for (int method=0; method<3; method++){
-					for (int i=startX; i<endX; i++) changed = changed || rowColChecker(method, i);
-					if (changed) {
-						hintGeneratorSeq();
-						changed = false;
-						method--;
-					}
+			// deduce hints, and set values..
+			for (int method = 0; method < 3; method++) {
+				for (int i = startX; i < endX; i++)
+					changed = changed || rowColChecker(method, i);
+				if (changed) {
+					hintGeneratorSeq();
+					changed = false;
+					method--;
 				}
-			}	
+			}
 			System.out.println("ready!");
 			// share!
-			for (int p=lb; p<=ub; p++){	
-				
-				world.allGather(patchbufs[p], patchbufs);
-				System.out.println(rank+" waiting..");
-			}	
-		}		
+			world.allGather(mypatch, patchbufs);
+			System.out.println(rank + " waiting..");
+		}
 
 	}
 
-	// **************************Sequential Methods****************************
+	// **************************Sequential
+	// Methods****************************
 
 	/**
 	 * Solve the puzzle
@@ -333,17 +348,20 @@ public class SudokuPuzzle {
 					Cell[] qad = getQuadrant(_puzzle[i][j].getPos());
 					for (int k = 0; k < row.length; k++) {
 						if (row[k].getValue() != 0) {
-							if (_puzzle[i][j].removeHint(row[k].getValue())) {
+							if (_puzzle[i][j].removeHint(row[k]
+									.getValue())) {
 								changed = true;
 							}
 						}
 						if (col[k].getValue() != 0) {
-							if (_puzzle[i][j].removeHint(col[k].getValue())) {
+							if (_puzzle[i][j].removeHint(col[k]
+									.getValue())) {
 								changed = true;
 							}
 						}
 						if (qad[k].getValue() != 0) {
-							if (_puzzle[i][j].removeHint(qad[k].getValue())) {
+							if (_puzzle[i][j].removeHint(qad[k]
+									.getValue())) {
 								changed = true;
 							}
 						}
@@ -357,8 +375,8 @@ public class SudokuPuzzle {
 	/**
 	 * Row and Column Checker
 	 * 
-	 * collect any hints that is not shared by any other. if hint is not shared
-	 * by any other, it is the answer/Value for its owner.
+	 * collect any hints that is not shared by any other. if hint is not
+	 * shared by any other, it is the answer/Value for its owner.
 	 */
 	public boolean rowColChecker(int type, int num) {
 
@@ -372,7 +390,8 @@ public class SudokuPuzzle {
 		}
 
 		boolean changed = false;
-		// index of these array represent the hint with the value of index+1
+		// index of these array represent the hint with the value of
+		// index+1
 		int[] hintCounter = new int[N]; // counter for hint
 		Cell[] owner = new Cell[N]; // first encountered ownere for hint
 
@@ -380,16 +399,19 @@ public class SudokuPuzzle {
 			if (holder[i].getValue() > 0)
 				continue; // skip cells with answer set already
 
-			ArrayList<Integer> hints = holder[i].getHints(); // get the list of
-																// hints in
+			ArrayList<Integer> hints = holder[i].getHints(); // get the
+			// list of
+			// hints in
 
 			for (int j = 0; j < hints.size(); j++) {
 				int hintVal = hints.get(j) - 1;
 				if (owner[hintVal] == null)
-					owner[hintVal] = holder[i]; // record a first seen hints
-												// owner
-				hintCounter[hintVal]++; // for every hint seen increment its
-										// counter
+					owner[hintVal] = holder[i]; // record a first seen
+				// hints
+				// owner
+				hintCounter[hintVal]++; // for every hint seen increment
+				// its
+				// counter
 			}
 		}
 
@@ -406,7 +428,8 @@ public class SudokuPuzzle {
 		return changed;
 	}
 
-	// ***********************Brute Force Methods******************************
+	// ***********************Brute Force
+	// Methods******************************
 	/**
 	 * Run the brute force method on the current puzzle
 	 */
@@ -418,8 +441,8 @@ public class SudokuPuzzle {
 				// forwardtrack
 				cell = getNextEmptyCell(cell);
 				if (cell == null) {
-					System.out.println("Brute Force Done, count = " + count);
-					break;
+					System.out.println("Brute Force Done, count = "
+							+ count);
 				}
 			} else {
 				// backtrack
@@ -430,8 +453,8 @@ public class SudokuPuzzle {
 	}
 
 	/**
-	 * Essentially the hint checker but looks at temp and normal values and only
-	 * looks at empty cells
+	 * Essentially the hint checker but looks at temp and normal values and
+	 * only looks at empty cells
 	 * 
 	 * @param cell
 	 */
@@ -466,7 +489,8 @@ public class SudokuPuzzle {
 		for (int x = 0; x < N; x++) {
 			for (int y = 0; y < N; y++) {
 				if (_puzzle[x][y].isEmpty()) {
-					_puzzle[x][y].setValue(_puzzle[x][y].getTempValue());
+					_puzzle[x][y].setValue(_puzzle[x][y]
+							.getTempValue());
 				}
 			}
 		}
@@ -524,11 +548,10 @@ public class SudokuPuzzle {
 		int x = cell.getX();
 		int y = cell.getY();
 		if (x == 0 && y == 0) {
-			System.out.println("hit beginning");
 			return null;
 		}
 		if (y == 0) {
-			y = N-1;
+			y = 8;
 			x--;
 		} else {
 			y--;
@@ -545,10 +568,10 @@ public class SudokuPuzzle {
 	public Cell getNextCell(Cell cell) {
 		int x = cell.getX();
 		int y = cell.getY();
-		if (x == N-1 && y == N-1) {
+		if (x == 8 && y == 8) {
 			return null;
 		}
-		if (y == N-1) {
+		if (y == 8) {
 			y = 0;
 			x++;
 		} else {
@@ -567,8 +590,8 @@ public class SudokuPuzzle {
 				try {
 					sb.append(_puzzle[x][y].getValue());
 				} catch (Exception e) {
-					System.out.println("You messed up the input at (" + x + ","
-							+ y + ")");
+					System.out.println("You messed up the input at ("
+							+ x + "," + y + ")");
 				}
 				sb.append(" ");
 				if (y % sqrtN == (sqrtN - 1)) {
@@ -581,35 +604,5 @@ public class SudokuPuzzle {
 			}
 		}
 		System.out.print(sb.toString());
-	}
-	
-	/**
-	 * Print the contents of the puzzle
-	 */
-	static public String printBrutePuzzle() {
-		StringBuilder sb = new StringBuilder();
-		for (int x = 0; x < N; x++) {
-			for (int y = 0; y < N; y++) {
-				try {
-					if (_puzzle[x][y].getValue() != 0) {
-						sb.append(_puzzle[x][y].getValue());
-					} else {
-						sb.append(_puzzle[x][y].getTempValue());
-					}
-				} catch (Exception e) {
-					System.out.println("You messed up the input at (" + x + ","
-							+ y + ")");
-				}
-				sb.append(" ");
-				if (y % sqrtN == (sqrtN - 1)) {
-					sb.append(" ");
-				}
-			}
-			sb.append("\n");
-			if (x % sqrtN == (sqrtN - 1)) {
-				sb.append("\n");
-			}
-		}
-		return sb.toString();
 	}
 }
