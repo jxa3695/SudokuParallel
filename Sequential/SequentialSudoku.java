@@ -1,10 +1,13 @@
+import edu.rit.pj.Comm;
+
 
 public class SequentialSudoku {
 
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		Comm.init(args);
 		
 		if (args.length != 2) {
 			System.out.println("Usage: java SequentialSudoku N infile");
