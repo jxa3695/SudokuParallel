@@ -12,8 +12,12 @@ import edu.rit.pj.ParallelTeam;
 import edu.rit.pj.reduction.SharedBoolean;
 import edu.rit.pj.reduction.SharedInteger;
 
+import edu.rit.pj.Comm;
+import edu.rit.util.Range;
+import edu.rit.mp.IntegerBuf;
+import edu.rit.mp.ObjectBuf;
 public class SudokuPuzzle {
-
+	
 	public static int count;
 	public static int N;
 	public static int sqrtN;
@@ -224,7 +228,58 @@ public class SudokuPuzzle {
 	/**
 	 * Solve the puzzle using a cluster
 	 */
-	public void solveClu() {
+	public void solveClu(Comm world, int rank, int size) throws Exception {
+		
+		// slice matrix based on size
+		Range[] ranges = new Range(0, N-1).subranges(size); 
+
+		Range range = ranges[rank];
+		int lb = range.lb(),
+		 	ub = range.ub();
+
+
+		Range[] quadRange = new Range(0, N-1).subranges(sqrtN); 
+		ObjectBuf<Cell>[] patchbufs =  ObjectBuf.patchBuffers(_puzzle, quadRange, quadRange);
+		//hintGEn!
+		int quadCount= ub-lb;
+		boolean [] quadComplete = new boolean[quadCount+1];
+		
+		
+		
+		for(;;){
+			// process retires if all of its own ed cell is solved
+			for (int p=lb; p<=ub; p++){ // traverse quads
+				boolean changed = false;
+				
+				if ( quadComplete[ Math.abs(p-lb) ] ) continue;
+				ObjectBuf<Cell> mypatch = patchbufs[p];
+
+				// int plb = mypatch.lb(),
+
+
+				int startX = p / sqrtN * sqrtN,
+					startY =  p % sqrtN * sqrtN,
+					endX = startX + 2,
+					endY = startY + 2;
+
+				// deduce hints, and set values..
+				for (int method=0; method<3; method++){
+					for (int i=startX; i<endX; i++) changed = changed || rowColChecker(method, i);
+					if (changed) {
+						hintGeneratorSeq();
+						changed = false;
+						method--;
+					}
+				}
+			}	
+			System.out.println("ready!");
+			// share!
+			for (int p=lb; p<=ub; p++){	
+				
+				world.allGather(patchbufs[p], patchbufs);
+				System.out.println(rank+" waiting..");
+			}	
+		}		
 
 	}
 
