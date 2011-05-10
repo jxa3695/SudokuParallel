@@ -79,11 +79,11 @@ public class Cell {
 		tempValue++;
 		while (!tempHints.contains(tempValue)) {
 			tempValue++;
-			if (tempValue > 9) {
+			if (tempValue > SudokuPuzzle.N) {
 				break;
 			}
 		}
-		if (tempValue <= 9) {
+		if (tempValue <= SudokuPuzzle.N) {
 			tempHints.remove(tempHints.indexOf(tempValue));
 			SudokuPuzzle.count--;
 			return true;
