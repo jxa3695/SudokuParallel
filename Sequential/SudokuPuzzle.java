@@ -17,7 +17,7 @@ public class SudokuPuzzle {
 	public static int count;
 	public static int N;
 	public static int sqrtN;
-	private Cell[][] _puzzle;
+	private static Cell[][] _puzzle;
 
 	private static SharedBoolean sharedHintGen;
 	private static SharedBoolean sharedChanged;
@@ -129,6 +129,7 @@ public class SudokuPuzzle {
 									for (int i = first; i <= last; i++) {
 										hintGen_thread = hintGen_thread
 												|| hintGeneratorSmp(zz, i);
+
 									}
 								}
 
@@ -257,7 +258,7 @@ public class SudokuPuzzle {
 				if (count == 0) {
 					break;
 				} else {
-					// no solution found
+					bruteForceIt();
 					break;
 				}
 			}
@@ -350,6 +351,155 @@ public class SudokuPuzzle {
 		return changed;
 	}
 
+	// ***********************Brute Force Methods******************************
+	/**
+	 * Run the brute force method on the current puzzle
+	 */
+	public void bruteForceIt() {
+		Cell cell = getNextEmptyCell(null);
+		while (count > 0) {
+			setCellTempHints(cell);
+			if (cell.nextTempValue()) {
+				// forwardtrack
+				cell = getNextEmptyCell(cell);
+				if (cell == null) {
+					System.out.println("Brute Force Done, count = " + count);
+				}
+			} else {
+				// backtrack
+				cell = getPrevEmptyCell(cell);
+			}
+		}
+		fillInBruteForce();
+	}
+
+	/**
+	 * Essentially the hint checker but looks at temp and normal values and only
+	 * looks at empty cells
+	 * 
+	 * @param cell
+	 */
+	public void setCellTempHints(Cell cell) {
+		cell.resetTempHints();
+		Cell[] quad = getQuadrant(cell.getPos());
+		Cell[] row = getRow(cell.getX());
+		Cell[] col = getCol(cell.getY());
+		for (int x = 0; x < row.length; x++) {
+			if (row[x].isEmpty()) {
+				cell.removeTempHint(row[x].getTempValue());
+			} else {
+				cell.removeTempHint(row[x].getValue());
+			}
+			if (col[x].isEmpty()) {
+				cell.removeTempHint(col[x].getTempValue());
+			} else {
+				cell.removeTempHint(col[x].getValue());
+			}
+			if (quad[x].isEmpty()) {
+				cell.removeTempHint(quad[x].getTempValue());
+			} else {
+				cell.removeTempHint(quad[x].getValue());
+			}
+		}
+	}
+
+	/**
+	 * Change the temp values into the real values
+	 */
+	public void fillInBruteForce() {
+		for (int x = 0; x < N; x++) {
+			for (int y = 0; y < N; y++) {
+				if (_puzzle[x][y].isEmpty()) {
+					_puzzle[x][y].setValue(_puzzle[x][y].getTempValue());
+				}
+			}
+		}
+	}
+
+	/**
+	 * Get the next cell that can hold a temp value
+	 * 
+	 * @param cell
+	 * @return
+	 */
+	public Cell getNextEmptyCell(Cell cell) {
+		if (cell == null) {
+			cell = _puzzle[0][0];
+		} else {
+			cell = getNextCell(cell);
+			if (cell == null) {
+				return null;
+			}
+		}
+		while (!cell.isEmpty()) {
+			cell = getNextCell(cell);
+			if (cell == null) {
+				return null;
+			}
+		}
+		return cell;
+	}
+
+	/**
+	 * Get the last Cell that can hold a temp value
+	 * 
+	 * @param cell
+	 * @return
+	 */
+	public Cell getPrevEmptyCell(Cell cell) {
+		cell = getPrevCell(cell);
+		while (!cell.isEmpty()) {
+			cell = getPrevCell(cell);
+			if (cell == null) {
+				return null;
+			}
+		}
+		return cell;
+	}
+
+	/**
+	 * Get the previous cell in the matrix
+	 * 
+	 * @param cell
+	 *            - previous cell
+	 * @return
+	 */
+	public Cell getPrevCell(Cell cell) {
+		int x = cell.getX();
+		int y = cell.getY();
+		if (x == 0 && y == 0) {
+			return null;
+		}
+		if (y == 0) {
+			y = 8;
+			x--;
+		} else {
+			y--;
+		}
+		return _puzzle[x][y];
+	}
+
+	/**
+	 * Get the next cell in the matrix
+	 * 
+	 * @param cell
+	 * @return
+	 */
+	public Cell getNextCell(Cell cell) {
+		int x = cell.getX();
+		int y = cell.getY();
+		if (x == 8 && y == 8) {
+			return null;
+		}
+		if (y == 8) {
+			y = 0;
+			x++;
+		} else {
+			y++;
+		}
+		return _puzzle[x][y];
+	}
+
 	/**
 	 * Print the contents of the puzzle
 	 */
@@ -375,5 +525,4 @@ public class SudokuPuzzle {
 		}
 		System.out.print(sb.toString());
 	}
-
 }

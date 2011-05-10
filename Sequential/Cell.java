@@ -14,6 +14,9 @@ public class Cell {
 			myPos; // representation of which SudokuPuzzle.sqrtN x
 					// SudokuPuzzle.sqrtN matrix it is
 
+	private ArrayList<Integer> tempHints;
+	private int tempValue;
+
 	/**
 	 * Cell constructor
 	 * 
@@ -27,9 +30,14 @@ public class Cell {
 		this.myPos = ((x / SudokuPuzzle.sqrtN) * SudokuPuzzle.sqrtN)
 				+ (y / SudokuPuzzle.sqrtN);
 		hints = new ArrayList<Integer>(SudokuPuzzle.N);
-		if (value == 0) {	
+
+		tempHints = new ArrayList<Integer>(SudokuPuzzle.N); // used in the brute
+															// force method
+
+		if (value == 0) {
 			for (int i = 1; i <= SudokuPuzzle.N; i++) {
 				hints.add(i);
+				tempHints.add(i);
 			}
 		} else {
 			setValue(value);
@@ -54,10 +62,84 @@ public class Cell {
 	public void setValue(int value) {
 		this.value = value;
 		this.hints.clear();
-		
-		//TODO: figure a way to tell if it is being run in parallel
+		this.tempHints.clear();
+
+		// TODO: figure a way to tell if it is being run in parallel
 		SudokuPuzzle.count--;
 		SudokuPuzzle.sharedCount.decrementAndGet();
+	}
+
+	/**
+	 * Find the next possible temp value in the temp hints list and remove if
+	 * there is a possible one
+	 * 
+	 * @return false if no higher valid values exist, true if one does
+	 */
+	public boolean nextTempValue() {
+		tempValue++;
+		while (!tempHints.contains(tempValue)) {
+			tempValue++;
+			if (tempValue > 9) {
+				break;
+			}
+		}
+		if (tempValue <= 9) {
+			tempHints.remove(tempHints.indexOf(tempValue));
+			SudokuPuzzle.count--;
+			return true;
+		} else {
+			tempValue = 0;
+			SudokuPuzzle.count++;
+			return false;
+		}
+	}
+
+	/**
+	 * Removes a temp hint from the tempHint List
+	 * @param num
+	 */
+	public void removeTempHint(int num) {
+		if (tempHints.contains(num)) {
+			tempHints.remove(tempHints.indexOf(num));
+		}
+	}
+
+	/**
+	 * Adds a temp hint to the tempHint list
+	 * @param num
+	 */
+	public void addTempHint(int num) {
+		if (!tempHints.contains(num)) {
+			tempHints.add(num);
+		}
+	}
+
+	/**
+	 * Refills the tempHint list with numbers 1-N
+	 */
+	public void resetTempHints() {
+		for (int x = 1; x <= SudokuPuzzle.N; x++) {
+			addTempHint(x);
+		}
+	}
+
+	public ArrayList<Integer> getTempHints() {
+		return tempHints;
+	}
+
+	public int getTempValue() {
+		return tempValue;
+	}
+
+	public void setTempValue(int value) {
+		tempValue = value;
+	}
+
+	/**
+	 * @return true - if the cell has not been solved yet
+	 */
+	public boolean isEmpty() {
+		return value == 0;
 	}
 
 	/**
@@ -80,6 +162,7 @@ public class Cell {
 		boolean removed = false;
 		if (hints.contains(num)) {
 			hints.remove(hints.indexOf(num));
+			tempHints.remove(tempHints.indexOf(num));
 			removed = true;
 			if (hints.size() == 1) {
 				setValue(hints.get(0));
