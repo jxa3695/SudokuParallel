@@ -239,14 +239,14 @@ public class SudokuPuzzle {
 				continue;
 			} else {
 				if (sharedCount.get() == 0) {
-					System.out.println("solution found!");
+					//System.out.println("solution found!");
 					break;
 				} else {
 					// No solution can be found using our algorithms, break out
 					// or use another method
-					System.out.println("brute forcing now");
-					System.out.println("state before brute force");
-					System.out.print(printBrutePuzzle());
+					//System.out.println("brute forcing now");
+					//System.out.println("state before brute force");
+					//System.out.print(printBrutePuzzle());
 					bruteForceIt(true);
 					break;
 				}
@@ -571,8 +571,8 @@ public class SudokuPuzzle {
 				// forwardtrack
 				cell = getNextEmptyCell(cell);
 				if (cell == null) {
-					System.out.println("Brute Force Done, count = "
-							+ (parallel ? sharedCount.get() : count));
+					//System.out.println("Brute Force Done, count = "
+						//	+ (parallel ? sharedCount.get() : count));
 					break;
 				}
 			} else {
@@ -678,7 +678,7 @@ public class SudokuPuzzle {
 		int x = cell.getX();
 		int y = cell.getY();
 		if (x == 0 && y == 0) {
-			System.out.println("hit beginning");
+			//System.out.println("hit beginning");
 			return null;
 		}
 		if (y == 0) {
