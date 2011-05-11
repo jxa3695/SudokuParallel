@@ -1,29 +1,29 @@
-Sequential:
-
 Board Size		Time/heuristic (msec)
 
 					Sequential		SMP		Cluster
 
-4x4						1						
+									sqrtN	
+									
+4x4						1			143		--	
 
-9x9 (easy)				13						
+9x9 (easy)				13			62		405	
 
-9x9 (hard)				62						
+9x9 (hard)				62			110		1285
 
-9x9 (harder)			394						
+9x9 (harder)			394			109		7806	
 
-9x9 (evil)				361					
+9x9 (evil)				361			116		2308
 
-9x9 (escargot)			287						
+9x9 (escargot)			287			396		4897
 
-16x16					45						
+16x16					45			113		795
 
-25x25					112					
+25x25					112			153		1807
 
 					Time/BF (msec)
 					
-					Sequential		SMP		Cluster
-
+					Sequential
+					
 4x4						4						
 
 9x9 (easy)				390						
