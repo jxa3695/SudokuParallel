@@ -1,8 +1,5 @@
 import edu.rit.pj.Comm;
 
-import edu.rit.pj.Comm;
-import edu.rit.pj.CommStatus;
-
 public class CluSudoku {
 	/**
 	 * @param args
@@ -37,10 +34,9 @@ public class CluSudoku {
 		if (SudokuPuzzle.sharedCount.get() > 0 && rank == 0) {
 			System.out
 					.println("\nState of the puzzle when the algorithm failed");
-			System.out.println("count = "
-					+ SudokuPuzzle.sharedCount.get());
+			System.out.println("count = " + SudokuPuzzle.sharedCount.get());
 		} else {
-			if( rank == 0 ) {
+			if (rank == 0) {
 				System.out.println("\nSolved Puzzle");
 			}
 		}

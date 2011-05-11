@@ -2,9 +2,11 @@
  * Object representation of a cell in the Sudoku puzzle
  */
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Cell {
+@SuppressWarnings("serial")
+public class Cell implements Serializable {
 
 	/** The array of possible values for this cell */
 	private ArrayList<Integer> hints;
@@ -104,6 +106,7 @@ public class Cell {
 
 	/**
 	 * Removes a temp hint from the tempHint List
+	 * 
 	 * @param num
 	 */
 	public void removeTempHint(int num) {
@@ -114,6 +117,7 @@ public class Cell {
 
 	/**
 	 * Adds a temp hint to the tempHint list
+	 * 
 	 * @param num
 	 */
 	public void addTempHint(int num) {
