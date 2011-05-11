@@ -32,16 +32,15 @@ public class CluSudoku {
 		puzzle.solveClu(world, rank, size);
 		long stop = System.currentTimeMillis();
 		if (SudokuPuzzle.sharedCount.get() > 0 && rank == 0) {
-			System.out
-					.println("\nState of the puzzle when the algorithm failed");
+			System.out.println("\nState of the puzzle when the algorithm failed");
 			System.out.println("count = " + SudokuPuzzle.sharedCount.get());
 		} else {
 			if (rank == 0) {
 				System.out.println("\nSolved Puzzle");
+				puzzle.printPuzzle();
+				System.out.println((stop - start) + " msec");
 			}
 		}
-		puzzle.printPuzzle();
-
-		System.out.println((stop - start) + " msec");
+		
 	}
 }
