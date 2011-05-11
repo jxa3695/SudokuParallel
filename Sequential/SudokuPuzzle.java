@@ -113,6 +113,10 @@ public class SudokuPuzzle {
 	/**
 	 * Solve the puzzle using a SMP
 	 */
+		// ******************************SMP Methods********************************
+	/**
+	 * Solve the puzzle using a SMP
+	 */
 	public void solveSmp() throws Exception {
 		ParallelTeam pt = new ParallelTeam();
 
@@ -122,7 +126,7 @@ public class SudokuPuzzle {
 
 		int iterations = 0;
 
-		while (true) {
+		while (sharedCount.get() > 0) {
 			sharedChanged.set(false);
 			iterations++;
 			while (sharedHintGen.get()) {
@@ -136,11 +140,10 @@ public class SudokuPuzzle {
 							execute(0, N - 1, new IntegerForLoop() {
 
 								public void run(int first, int last) {
+									hintGen_thread = false;
 									for (int i = first; i <= last; i++) {
-										hintGen_thread =
-												hintGen_thread
-														|| hintGeneratorSmp(
-																zz, i);
+										hintGen_thread = hintGen_thread
+												|| hintGeneratorSmp(zz, i);
 
 									}
 								}
@@ -163,38 +166,86 @@ public class SudokuPuzzle {
 				boolean changed_thread = false;
 
 				public void run() throws Exception {
-					for (int z = 0; z < 3; z++) {
-						final int zz = z;
-						execute(0, N - 1, new IntegerForLoop() {
+					execute(0, N - 1, new IntegerForLoop() {
 
-							public void run(int first, int last) {
-								for (int i = first; i <= last; i++) {
-									changed_thread =
-											changed_thread
-													|| rowColChecker(
-															zz, i);
-								}
+						public void run(int first, int last) {
+							for (int i = first; i <= last; i++) {
+								changed_thread = changed_thread
+										|| rowColChecker(0, i);
 							}
+						}
 
-							public void finish() {
-								sharedChanged.set(changed_thread
-										|| sharedChanged.get());
-							}
-						}, BarrierAction.WAIT);
-					}
+						public void finish() {
+							sharedChanged.set(changed_thread
+									|| sharedChanged.get());
+						}
+					}, BarrierAction.WAIT);
 				}
 			});
+			if (sharedChanged.get()) {
+				sharedHintGen.set(true);
+				continue;
+			}
+			pt.execute(new ParallelRegion() {
 
+				boolean changed_thread = false;
+
+				public void run() throws Exception {
+					execute(0, N - 1, new IntegerForLoop() {
+
+						public void run(int first, int last) {
+							for (int i = first; i <= last; i++) {
+								changed_thread = changed_thread
+										|| rowColChecker(1, i);
+							}
+						}
+
+						public void finish() {
+							sharedChanged.set(changed_thread
+									|| sharedChanged.get());
+						}
+					}, BarrierAction.WAIT);
+				}
+			});
+			if (sharedChanged.get()) {
+				sharedHintGen.set(true);
+				continue;
+			}
+			pt.execute(new ParallelRegion() {
+
+				boolean changed_thread = false;
+
+				public void run() throws Exception {
+					execute(0, N - 1, new IntegerForLoop() {
+
+						public void run(int first, int last) {
+							for (int i = first; i <= last; i++) {
+								changed_thread = changed_thread
+										|| rowColChecker(2, i);
+							}
+						}
+
+						public void finish() {
+							sharedChanged.set(changed_thread
+									|| sharedChanged.get());
+						}
+					}, BarrierAction.WAIT);
+				}
+			});
 			if (sharedChanged.get()) {
 				sharedHintGen.set(true);
 				continue;
 			} else {
 				if (sharedCount.get() == 0) {
+					System.out.println("solution found!");
 					break;
 				} else {
-					// No solution can be found using our algorithms, break
-					// out
+					// No solution can be found using our algorithms, break out
 					// or use another method
+					System.out.println("brute forcing now");
+					System.out.println("state before brute force");
+					System.out.print(printBrutePuzzle());
+					bruteForceIt(true);
 					break;
 				}
 			}
@@ -390,7 +441,7 @@ public class SudokuPuzzle {
 				if (count == 0) {
 					break;
 				} else {
-					bruteForceIt();
+					bruteForceIt(false);
 					break;
 				}
 			}
@@ -490,21 +541,20 @@ public class SudokuPuzzle {
 		return changed;
 	}
 
-	// ***********************Brute Force
-	// Methods******************************
+	// ***********************Brute Force Methods******************************
 	/**
 	 * Run the brute force method on the current puzzle
 	 */
-	public void bruteForceIt() {
+	public void bruteForceIt(boolean parallel) {
 		Cell cell = getNextEmptyCell(null);
-		while (count > 0) {
+		while (parallel ? sharedCount.get() > 0 : count > 0) {
 			setCellTempHints(cell);
-			if (cell.nextTempValue()) {
+			if (cell.nextTempValue(parallel)) {
 				// forwardtrack
 				cell = getNextEmptyCell(cell);
 				if (cell == null) {
-					System.out.println("Brute Force Done, count = "
-							+ count);
+					System.out.println("Brute Force Done, count = " + (parallel ? sharedCount.get() : count));
+					break;
 				}
 			} else {
 				// backtrack
@@ -610,10 +660,11 @@ public class SudokuPuzzle {
 		int x = cell.getX();
 		int y = cell.getY();
 		if (x == 0 && y == 0) {
+			System.out.println("hit beginning");
 			return null;
 		}
 		if (y == 0) {
-			y = 8;
+			y = N - 1;
 			x--;
 		} else {
 			y--;
@@ -630,10 +681,10 @@ public class SudokuPuzzle {
 	public Cell getNextCell(Cell cell) {
 		int x = cell.getX();
 		int y = cell.getY();
-		if (x == 8 && y == 8) {
+		if (x == N - 1 && y == N - 1) {
 			return null;
 		}
-		if (y == 8) {
+		if (y == N - 1) {
 			y = 0;
 			x++;
 		} else {
@@ -666,5 +717,35 @@ public class SudokuPuzzle {
 			}
 		}
 		System.out.print(sb.toString());
+	}
+	
+	/**
+	 * Print the contents of the puzzle
+	 */
+	static public String printBrutePuzzle() {
+		StringBuilder sb = new StringBuilder();
+		for (int x = 0; x < N; x++) {
+			for (int y = 0; y < N; y++) {
+				try {
+					if (_puzzle[x][y].getValue() != 0) {
+						sb.append(_puzzle[x][y].getValue());
+					} else {
+						sb.append(_puzzle[x][y].getTempValue());
+					}
+				} catch (Exception e) {
+					System.out.println("You messed up the input at (" + x + ","
+							+ y + ")");
+				}
+				sb.append(" ");
+				if (y % sqrtN == (sqrtN - 1)) {
+					sb.append(" ");
+				}
+			}
+			sb.append("\n");
+			if (x % sqrtN == (sqrtN - 1)) {
+				sb.append("\n");
+			}
+		}
+		return sb.toString();
 	}
 }

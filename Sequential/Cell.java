@@ -75,7 +75,7 @@ public class Cell {
 	 * 
 	 * @return false if no higher valid values exist, true if one does
 	 */
-	public boolean nextTempValue() {
+	public boolean nextTempValue(boolean parallel) {
 		tempValue++;
 		while (!tempHints.contains(tempValue)) {
 			tempValue++;
@@ -85,11 +85,19 @@ public class Cell {
 		}
 		if (tempValue <= SudokuPuzzle.N) {
 			tempHints.remove(tempHints.indexOf(tempValue));
-			SudokuPuzzle.count--;
+			if (parallel) {
+				SudokuPuzzle.sharedCount.decrementAndGet();
+			} else {
+				SudokuPuzzle.count--;
+			}
 			return true;
 		} else {
 			tempValue = 0;
-			SudokuPuzzle.count++;
+			if (parallel) {
+				SudokuPuzzle.sharedCount.incrementAndGet();
+			} else {
+				SudokuPuzzle.count++;
+			}
 			return false;
 		}
 	}

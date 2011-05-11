@@ -22,7 +22,7 @@ public class SequentialSudoku {
 		puzzle.printPuzzle();
 		long start = System.currentTimeMillis();
 		//puzzle.solveSeq();
-		puzzle.bruteForceIt();
+		puzzle.bruteForceIt(false);
 		long stop = System.currentTimeMillis();
 		if (SudokuPuzzle.count > 0) {
 			System.out.println("\nState of the puzzle when the algorithm failed");
